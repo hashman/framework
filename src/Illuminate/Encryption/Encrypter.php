@@ -56,15 +56,19 @@ class Encrypter extends BaseEncrypter implements EncrypterContract
      * Encrypt the given value.
      *
      * @param  string  $value
+     * @param  bool    $serialize
      * @return string
      *
      * @throws \Illuminate\Contracts\Encryption\EncryptException
      */
-    public function encrypt($value)
+    public function encrypt($value, $serialize = true)
     {
         $iv = Str::randomBytes($this->getIvSize());
 
-        $value = \openssl_encrypt(serialize($value), $this->cipher, $this->key, 0, $iv);
+        $value = \openssl_encrypt(
+            $serialize ? serialize($value) : $value,
+            $this->cipher, $this->key, 0, $iv
+        );
 
         if ($value === false) {
             throw new EncryptException('Could not encrypt the data.');
@@ -88,11 +92,12 @@ class Encrypter extends BaseEncrypter implements EncrypterContract
      * Decrypt the given value.
      *
      * @param  string  $payload
+     * @param  bool    $unserialize
      * @return string
      *
      * @throws \Illuminate\Contracts\Encryption\DecryptException
      */
-    public function decrypt($payload)
+    public function decrypt($payload, $unserialize = true)
     {
         $payload = $this->getJsonPayload($payload);
 
@@ -104,7 +109,7 @@ class Encrypter extends BaseEncrypter implements EncrypterContract
             throw new DecryptException('Could not decrypt the data.');
         }
 
-        return unserialize($decrypted);
+        return $unserialize ? unserialize($decrypted) : $decrypted;
     }
 
     /**
